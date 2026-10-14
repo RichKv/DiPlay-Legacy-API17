@@ -114,7 +114,7 @@ internal class ClusterMapPresentation(
             textSize = 26f
             gravity = Gravity.CENTER
         }
-        root.addView(waitingLabel, FrameLayout.LayoutParams(videoParams))
+        root.addView(waitingLabel, FrameLayout.LayoutParams(videoParams.width, videoParams.height, videoParams.gravity))
         setContentView(root)
     }
 

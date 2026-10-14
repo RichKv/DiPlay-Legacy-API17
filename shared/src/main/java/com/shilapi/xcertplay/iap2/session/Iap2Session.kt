@@ -21,7 +21,7 @@ class Iap2Session private constructor(
     private val channel: Iap2CsmChannel,
     private val traceContext: String,
     private val onTrace: (String) -> Unit,
-) : AutoCloseable {
+) : java.io.Closeable {
     val isClosed: Boolean get() = channel.isClosed
 
     fun awaitReady(timeoutMillis: Long): Boolean {

@@ -23,7 +23,7 @@ Thumbs.db
 *.log
 /.idea
 
-# Local beta credentials and release signing (never commit)
+# Local credentials and release signing (never commit)
 .private/
 *.jks
 *.keystore

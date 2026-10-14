@@ -1,7 +1,10 @@
-# Test checklist
+# Testing
 
-Use the [installation guide](INSTALL.md). With the car parked, verify wired and wireless connection, picture, touch and music. Test disconnect/reconnect, then settings Apply/Cancel. Save a diagnostic report after reproducing an issue.
+```sh
+python3 scripts/check_source_boundary.py
+./gradlew :shared:testApi17DebugUnitTest :common:testApi17DebugUnitTest :shared:testLegacyDebugUnitTest :common:testLegacyDebugUnitTest :shared:lintApi17Debug :common:lintApi17Debug :mobile:lintApi17Debug :mobile:assembleApi17Debug :mobile:assembleApi17DebugAndroidTest
+```
 
-For channel memory, connect until authenticated CarPlay renders, disconnect and reconnect without changing the car's Wi-Fi association. Look for `remembered saved` followed by `remembered first`. Report absent events; creating a hotspot alone is insufficient.
+Run `com.shilapi.xcertplay.Api17SmokeInstrumentation` on a dedicated API17 emulator. It checks old-runtime class loading and interface startup. It does not pair a phone or provide authentication. CI has no release signer or authentication assets and publishes test reports only.
 
-Include head-unit model, DiLink/Android, iPhone/iOS, wired/wireless, app version and exact steps. Do not post credentials or unreviewed personal information. See [compatibility](COMPATIBILITY.md) for remaining limitations.
+With local release signing configured, use `-Papi17TestBuildType=release :mobile:assembleApi17ReleaseAndroidTest` to build checks for the signed release application. Check the test APK signer matches the application before running it.

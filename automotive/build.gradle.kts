@@ -14,6 +14,7 @@ android {
         targetSdk = 37
         versionCode = 1201
         versionName = "1.2.1"
+        missingDimensionStrategy("platform", "legacy")
 
     }
 
@@ -48,6 +49,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(project(":common"))
     implementation(project(":shared"))
+    implementation(project(":native-support"))
     implementation(libs.androidx.app.automotive)
     implementation(libs.androidx.appcompat)
 }

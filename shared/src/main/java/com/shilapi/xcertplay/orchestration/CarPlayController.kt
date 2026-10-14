@@ -4,9 +4,9 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothSocket
+import com.shilapi.xcertplay.compat.BluetoothCompat
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -159,7 +159,7 @@ class CarPlayController(
     private val appContext = context.applicationContext
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
     private val bluetoothAdapter =
-        (appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+        BluetoothCompat.getAdapter(appContext)
     private val iphoneHost = IphoneUsbHost(
         appContext,
         usbManager,
@@ -1764,9 +1764,7 @@ class CarPlayController(
     private fun isBluetoothDeviceConnected(device: BluetoothDevice): Boolean = try {
         val method = BluetoothDevice::class.java.getMethod("isConnected")
         method.invoke(device) as? Boolean == true
-    } catch (error: ReflectiveOperationException) {
-        false
-    } catch (error: RuntimeException) {
+    } catch (error: Exception) {
         Log.w(IphoneCarPlayConfiguration.TAG, "Could not read Bluetooth connection state", error)
         false
     }

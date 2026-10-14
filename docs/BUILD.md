@@ -1,41 +1,22 @@
-# Building DiPlay
+# Build
 
-Requirements: JDK 25, Android SDK 37, NDK 25.2.9519653 and the included Gradle wrapper. NDK r25c is intentional: it is the last selected toolchain in this project that can emit the Android 4.4/API 19 native target.
-
-The standard `mobile` application has `minSdk 19` and packages ARM64, ARMv7, x86_64 and x86 libraries. The separate Android Automotive application retains its newer platform requirement.
-
-## Source and CI builds
+Use JDK 25, Gradle 9.5 wrapper, Android Gradle Plugin 9.3.0, Android SDK `platforms;android-37.0` and build-tools 36.0.0. API17 builds require no NDK. Set an untracked local.properties or ANDROID_SDK_ROOT for the local SDK.
 
 ```sh
-./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintDebug :mobile:assembleDebug
+python3 scripts/check_source_boundary.py
+./gradlew :shared:testApi17DebugUnitTest :common:testApi17DebugUnitTest :mobile:lintApi17Debug :mobile:assembleApi17Debug
 ```
 
-The resulting source-only APK contains no accessory identity. Standalone CarPlay requires runtime authentication provisioning. Tests generate synthetic identities at runtime; no test private-key files are tracked.
+On Windows use `python` and `gradlew.bat`. Output: `mobile/build/outputs/apk/api17/debug/mobile-api17-debug.apk`. Compile/target SDK 37 does not change the minimum install level of API17.
 
-## Local release packaging
+## Maintainer-signed release
 
-Provide an external asset directory using `DIPLAY_AUTH_ASSETS_DIR`. The directory must contain exactly the intended runtime files under `offline-mfi/identity.pk8` and `offline-mfi/certificate.p7b`. Neither file belongs in Git. The build permits those two files only when this explicit input is set and rejects unexpected credential containers elsewhere in APK assets.
-
-Set `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD` locally for your Android signing key. Never commit these values or the keystore. Different signing keys cannot update an existing project-signed installation.
+Supply ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD through a protected local environment. Do not place signing inputs in this repository.
 
 ```sh
-./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleRelease
+./gradlew :mobile:assembleApi17Release
 ```
 
-Output: `mobile/build/outputs/apk/release/mobile-release.apk`. The release APK deliberately contains the experimental identity described in the notices; it is extractable by recipients. The separate Android signing key is not included. The retired build-beta.py helper is not used; this Gradle workflow uses explicit environment inputs.
+Output: `mobile/build/outputs/apk/api17/release/mobile-api17-release.apk`. Verify signing for minimum API17, APK metadata and contents. Release signing material is separate from accessory authentication. The build rejects credential containers in APK assets and has no automatic accessory-asset input. Source builds remain usable for compilation and interface startup without those materials.
 
-The public release source archive corresponds to the tagged source and excludes runtime identities, signing keys, local configuration and build output.
-
-## Standalone car-test APK
-
-Use `:mobile:assembleStandaloneDebug` for a test APK that must connect to an iPhone:
-
-```sh
-DIPLAY_AUTH_ASSETS_DIR=/absolute/path/to/runtime-assets ./gradlew :mobile:assembleStandaloneDebug
-```
-
-This task refuses missing or empty runtime inputs. `assembleDebug` remains an identity-free
-source/CI build when the explicit asset input is absent; do not install that output as a
-standalone car-test package. Before delivery, verify both `assets/offline-mfi/identity.pk8`
-and `assets/offline-mfi/certificate.p7b` in the APK against the selected local inputs.
-Update the existing test app without uninstalling it to preserve its settings.
+A release attaches corresponding source, checksums, certificate fingerprint and its validation results. This procedure does not promise bit-identical builds across different environments or signers.

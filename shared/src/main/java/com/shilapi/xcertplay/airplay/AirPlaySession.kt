@@ -744,6 +744,15 @@ internal fun safeClose(closeable: Closeable?) {
     }
 }
 
+// Socket/ServerSocket only implement Closeable on API19+. Overloads avoid a runtime cast.
+internal fun safeClose(socket: java.net.Socket?) {
+    try { socket?.close() } catch (_: Exception) { }
+}
+
+internal fun safeClose(socket: java.net.ServerSocket?) {
+    try { socket?.close() } catch (_: Exception) { }
+}
+
 private fun ByteArray.toHex(): String =
     joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
 

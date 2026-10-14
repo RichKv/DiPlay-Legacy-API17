@@ -9,8 +9,14 @@ android {
     }
 
     defaultConfig {
-        minSdk = 19
+        minSdk = 17
         multiDexEnabled = true
+    }
+
+    flavorDimensions += "platform"
+    productFlavors {
+        create("legacy") { dimension = "platform"; minSdk = 19 }
+        create("api17") { dimension = "platform"; minSdk = 17 }
     }
 
     compileOptions {
@@ -26,7 +32,8 @@ dependencies {
     api(project(":shared"))
     implementation(libs.androidx.activity)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
+    "legacyImplementation"("androidx.core:core-ktx:1.13.1")
+    "api17Implementation"("androidx.core:core-ktx:1.12.0")
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.17")
 }

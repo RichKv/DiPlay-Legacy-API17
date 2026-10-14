@@ -3,9 +3,7 @@ package com.shilapi.xcertplay
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.LocaleManager
 import android.os.Build
-import android.os.LocaleList
 import android.content.Context
 import android.content.res.Configuration
 import com.shilapi.xcertplay.host.R
@@ -29,8 +27,8 @@ object AppLocale {
 
     fun preference(context: Context): String {
         if (Build.VERSION.SDK_INT >= 33) {
-            val locales = context.getSystemService(LocaleManager::class.java).applicationLocales
-            return if (locales.isEmpty) SYSTEM else locales[0].language
+            // LocaleManager only exists on API 33+; isolated in AppLocaleApi33.
+            return AppLocaleApi33.getPreferenceLanguage(context) ?: SYSTEM
         }
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LANGUAGE, SYSTEM)?.takeIf { it in ALL } ?: SYSTEM
@@ -39,8 +37,7 @@ object AppLocale {
     fun save(context: Context, language: String) {
         require(language in ALL)
         if (Build.VERSION.SDK_INT >= 33) {
-            context.getSystemService(LocaleManager::class.java).applicationLocales =
-                locale(language)?.let { LocaleList(it) } ?: LocaleList.getEmptyLocaleList()
+            AppLocaleApi33.saveLanguage(context, locale(language))
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(KEY_MIGRATED, true).remove(KEY_LANGUAGE).apply()
         } else {
@@ -54,12 +51,8 @@ object AppLocale {
         if (Build.VERSION.SDK_INT >= 33) {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             if (!prefs.getBoolean(KEY_MIGRATED, false)) {
-                val manager = context.getSystemService(LocaleManager::class.java)
                 val previous = locale(prefs.getString(KEY_LANGUAGE, SYSTEM) ?: SYSTEM)
-                // Never overwrite a language already chosen through Android Settings.
-                if (manager.applicationLocales.isEmpty && previous != null) {
-                    manager.applicationLocales = LocaleList(previous)
-                }
+                AppLocaleApi33.migrateFromPrefs(context, previous)
                 prefs.edit().putBoolean(KEY_MIGRATED, true).remove(KEY_LANGUAGE).apply()
             }
             return context

@@ -2697,8 +2697,6 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
-    private data class CanvasSupport(val supported: Boolean, val reason: String, val details: String)
-
     private fun largerCanvasSupport(display: AirPlayDisplayConfig): CanvasSupport {
         return try {
         val mime = if (hevcEnabled) "video/hevc" else "video/avc"
@@ -2717,35 +2715,7 @@ class CarPlayHostActivity : ComponentActivity() {
                     "Legacy decoder capability codec=${decoder.name} mime=$mime hardware=$hardware")
             }
         }
-        // Match MediaCodec.createDecoderByType's first suitable decoder; do not silently force
-        // an enlarged stream through a software decoder on a slower head unit.
-        val decoder = MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.firstOrNull {
-            !it.isEncoder && it.supportedTypes.any { type -> type.equals(mime, ignoreCase = true) }
-        }
-        if (decoder == null) {
-            CanvasSupport(false, "no_decoder", "Decoder capability mime=$mime result=no_decoder")
-        } else {
-            val hardware = if (Build.VERSION.SDK_INT >= 29) decoder.isHardwareAccelerated
-                else !decoder.name.startsWith("OMX.google.") && !decoder.name.startsWith("c2.android.")
-            val video = decoder.getCapabilitiesForType(mime).videoCapabilities
-            val sizeSupported = video?.isSizeSupported(display.widthPixels, display.heightPixels) == true
-            val rateSupported = sizeSupported && video?.areSizeAndRateSupported(
-                display.widthPixels, display.heightPixels, display.fps.toDouble()) == true
-            val reason = when {
-                !hardware -> "software_decoder"
-                hevcEnabled && hevcSoftwareDecoderEnabled -> "software_hevc_selected"
-                video == null -> "no_video_capabilities"
-                !sizeSupported -> "canvas_dimensions_unsupported"
-                !rateSupported -> "frame_rate_unsupported"
-                else -> "supported"
-            }
-            CanvasSupport(reason == "supported", reason,
-                "Decoder capability codec=${decoder.name} mime=$mime hardware=$hardware " +
-                    "sizeSupported=$sizeSupported rateSupported=$rateSupported " +
-                    "widths=${video?.supportedWidths} heights=${video?.supportedHeights} " +
-                    "alignment=${video?.widthAlignment}x${video?.heightAlignment} " +
-                    "fpsRange=${video?.supportedFrameRates} result=$reason")
-        }
+        CanvasCapabilitiesApi21.query(display, hevcEnabled, hevcSoftwareDecoderEnabled)
         } catch (error: Exception) {
             CanvasSupport(false, "capability_query_${error.javaClass.simpleName}",
                 "Decoder capability query failed error=${error.javaClass.simpleName}")
@@ -3499,7 +3469,7 @@ class CarPlayHostActivity : ComponentActivity() {
             MotionEvent.ACTION_POINTER_UP,
             MotionEvent.ACTION_CANCEL -> Log.i(
                 TAG,
-                "touch action=${MotionEvent.actionToString(event.actionMasked)} " +
+                "touch action=${event.actionMasked} " +
                     "pointers=${event.pointerCount} queued=$queued",
             )
         }

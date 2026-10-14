@@ -28,7 +28,7 @@ data class CarPlayLocationFix(
 }
 
 /** Supplies location data only while the phone has subscribed to iAP2 LocationInformation. */
-interface Iap2LocationProvider : AutoCloseable {
+interface Iap2LocationProvider : java.io.Closeable {
     /** Starts location updates and returns whether at least one source was subscribed. */
     fun start(): Boolean
 

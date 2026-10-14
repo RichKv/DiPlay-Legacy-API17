@@ -1,16 +1,31 @@
-﻿# DiPlay Legacy Android
+# DiPlay Legacy API17
 
-> 本项目基于 [shihabal3amri/DiPlay](https://github.com/shihabal3amri/DiPlay) 修改，重点增强对低版本 Android 系统及老款 Android 车机的兼容支持。
+本项目是 [DiPlay-Legacy-Android](https://github.com/programmerguohuajing/DiPlay-Legacy-Android) 的 Android 4.2.2 / API17 兼容派生版，基于 0.2.7、提交 `c8884adcc75bfda3c134db63877bd6c6f83beb74`。
 
-> 上游项目：https://github.com/shihabal3amri/DiPlay
+[English](README.md) · [兼容改动](docs/API17_CHANGES.md) · [构建](docs/BUILD.md) · [安装](docs/INSTALL.md) · [验证](docs/VALIDATION.md) · [许可证](docs/THIRD_PARTY_NOTICES.md)
 
-为兼容的比亚迪安卓车机提供有线及无线 CarPlay，采用 DiAuto 风格界面。
+## 本版用途
 
-> 这些项目专注于比亚迪汽车。它们可能在其他品牌上运行，但其他品牌不在支持范围内，也没有增加支持或修复其品牌特定兼容性问题的计划。
+仅将最低 Android 等级从 API19（Android 4.4）下放至 API17（Android 4.2.2），修改 API 调用隔离、旧运行时兼容、资源及构建配置；保留上游协议和应用选项，不新增车辆集成或应用服务接口。
 
-[下载与中文网站](https://shihabal3amri.github.io/DiPlay/zh-Hans/) · [完整说明](README.md) · [报告问题](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+本版验证范围为编译、安装及主界面启动。手机配对、无线网络和配件认证是另行准备及验证的条件。能够安装不等于已经完成手机投屏。构建不包含配件身份或凭据，也不自动下载它们。
 
-0.2.7 为公开预览版，未经 Apple 认证。请安装在车机上，而非 iPhone。无需越狱、转接盒或认证服务器。移动版 APK 现支持 Android 4.4（API 19）及以上版本：Android 4.4–7 的无线连接使用手动配置的车载热点，Android 8 及以上可使用 LocalOnlyHotspot，Wi-Fi Direct 仍需要 Android 10 或更高版本；有线 USB 路径在低版本上使用兼容实现。
+## 下载和更新
 
-认证使用从公开固件中提取的实验性配件身份，无法保证未来持续可用。部分车机仍可能卡顿或无法应用图标大小设置。应用界面支持英语、简体中文、阿拉伯语、俄语和西班牙语。源代码、构建说明及许可证随版本提供。
+[GitHub Releases](https://github.com/RichKv/DiPlay-Legacy-API17/releases) 提供维护者签名 APK、对应源码和 SHA256 校验文件。以具体版本附带的验证记录为准。本项目不部署下载网站。
 
+正式应用标识 `io.github.richkv.diplay.api17`，开发版加 `.debug`。版本 `0.2.7-api17.1`，versionCode 27。后续覆盖更新必须延续包名和签名证书，并递增版本码；不同签名构建不能默认互相覆盖。
+
+## 构建
+
+使用 JDK 25、Gradle 9.5、Android SDK 37 和 build-tools 36.0.0。API17 变体无需 NDK，不打包 JNI 原生库。
+
+```sh
+./gradlew :mobile:assembleApi17Debug
+```
+
+## 来源与声明
+
+选定上游最低等级是 API19，未限定必须是 Android 4.4.4。保留[来源记录](docs/UPSTREAM_PROVENANCE.md)、[上游原始说明](docs/UPSTREAM-README.zh-CN.md)及原署名。上游功能和验证记录属于上游，不作为本版 APK 的验证结果。
+
+接收器代码保留 GPLv3；DiAuto 衍生界面保留 AGPL-3.0-only。比亚迪图片和 CarPlay 图标另有声明，见[第三方声明](docs/THIRD_PARTY_NOTICES.md)。本项目是独立派生版，不是官方 DiPlay 发布版或 Apple 认证产品。

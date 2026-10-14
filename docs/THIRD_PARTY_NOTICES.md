@@ -1,43 +1,25 @@
-# Credits and license notices
+# Third-party notices
 
-## Receiver
+## Receiver and interface
 
-DiPlay is a modified version of [xcertplay by shilapi](https://github.com/shilapi/xcertplay). The upstream receiver is licensed under GNU GPL version 3; the full text is in `LICENSE` and the original README is retained in `docs/UPSTREAM-README.md`.
+The receiver derives from shilapi/xcertplay under GNU GPLv3; the full text is in LICENSE. The selected upstream identifies shihabal3amri/DiPlay and credits LIVI and Showcase for protocol research. Original source headers and README snapshots are retained.
 
-Upstream credits [LIVI](https://github.com/f-io/LIVI) and [Showcase](https://github.com/amineross/showcase) for protocol research. Existing source comments and attribution are preserved.
-
-## Home and settings UI
-
-`common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt` adapts the palette, visual arrangement and interface copy of the [DiAuto project](https://github.com/shihabal3amri/DiAuto). DiAuto's source is licensed under AGPL version 3. The UI file is marked AGPL-3.0-only; its license text is included in `docs/licenses/DiAuto-AGPL-3.0.txt`.
+The DiAuto-derived interface and website sources retain AGPL-3.0-only. The full text is in docs/licenses/DiAuto-AGPL-3.0.txt. Compatibility edits retain the applicable source-file terms; this notice does not relicense third-party assets.
 
 ## CarPlay icon
 
-The unmodified icon was obtained from Apple's developer site at:
+The upstream icon was obtained from https://developer.apple.com/assets/elements/icons/carplay/carplay-96x96_2x.png. CarPlay and the icon are Apple Inc. marks/assets and are not covered by the project's source-code license. The API17 APK uses a separate maintainer-created geometric icon (asset/api17-app-icon.svg, GPL-3.0-only) through its resource overlay. The upstream icon remains in the source baseline/history. No certification or endorsement is implied.
 
-https://developer.apple.com/assets/elements/icons/carplay/carplay-96x96_2x.png
+## BYD images
 
-CarPlay and the CarPlay icon are Apple Inc. marks/assets. This asset is not covered by the project's open-source code license. Its use here does not imply Apple approval or certification.
+Required Notice: Copyright AndyShaman (https://github.com/AndyShaman/BYDMate).
 
-## Runtime dependencies
+shared/src/legacy/assets/byd-hud-icons retains its PolyForm Noncommercial 1.0.0 license and notice. These files also exist in upstream history. Their original provenance is not independently established, and this edition does not assert unrestricted redistribution or commercial rights. The first API17 APK excludes these unused vendor image assets; corresponding source retains notices and original history.
 
-- AndroidX and Jetpack Compose — Android Open Source Project; Apache License 2.0.
-- Kotlin standard library — JetBrains; Apache License 2.0.
-- Bouncy Castle 1.79 — The Legion of the Bouncy Castle Inc.; Bouncy Castle license (MIT-style).
-- JmDNS 3.6.3 — JmDNS contributors; Apache License 2.0.
-- SLF4J — QOS.ch; MIT license.
+## Dependencies
 
-Gradle dependency declarations and version catalog accompany the source. License files available in the resolved artifacts are included under `docs/licenses/dependencies/`.
+AndroidX and Kotlin: Apache-2.0. Bouncy Castle 1.79: Bouncy Castle license. JmDNS 3.6.3: Apache-2.0. SLF4J: MIT. Included dependency license texts are in docs/licenses/dependencies; versions are declared in the Gradle catalog and build files.
 
-## Experimental authentication data
+## Authentication
 
-The public preview APK includes an accessory certificate/key pair recovered from public Carlinkit C2Air Allwinner V821 firmware during the owner's local investigation. These data are not newly generated Apple-issued credentials for DiPlay and are not relicensed as project source code. They are bundled in the preview APK to reproduce the offline experiment; continued acceptance and suitability for general distribution are unresolved. The source archive does not contain the private key, and the separate Android APK-signing key is never distributed.
-
-## Download website
-
-The static site layout, CSS and generator adapt DiAuto (AGPL-3.0). The AGPL license text is included with the source.
-
-## BYD HUD maneuver icons
-
-Required Notice: Copyright AndyShaman (https://github.com/AndyShaman/BYDMate)
-
-The maneuver PNGs under `shared/src/main/assets/byd-hud-icons` were imported from BYDMate. Its PolyForm Noncommercial 1.0.0 terms and required notice are included alongside the assets. These files are separate from the project code license; upstream describes them as donor assets and their original provenance is not independently established. The validated DiLink5.1 windshield path uses factory turn codes rather than these images.
+This edition supplies no accessory identity, certificate/key pair or authentication assets. Upstream descriptions of experimental authentication belong to upstream and do not describe this APK.

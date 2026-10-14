@@ -19,7 +19,7 @@ class Iap2LinkChannel private constructor(
     private val underlying: BlockingDuplexByteStream,
     private val linkConfig: Iap2LinkConfig,
     private val initiateNegotiation: Boolean,
-) : AutoCloseable {
+) : java.io.Closeable {
     private data class Command(val control: ByteArray)
 
     private val lock = Object()

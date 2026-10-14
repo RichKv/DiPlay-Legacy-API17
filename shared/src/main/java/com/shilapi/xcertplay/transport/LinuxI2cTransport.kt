@@ -59,7 +59,10 @@ class LinuxI2cTransport private constructor(
 
         /** Opens a Linux I2C device node. */
         @Throws(I2cTransportException::class)
-        fun open(devicePath: String): LinuxI2cTransport = open(devicePath, NativeLinuxI2cBridge)
+        fun open(devicePath: String): LinuxI2cTransport {
+            check(com.shilapi.xcertplay.compat.RuntimeCapabilities.nativeSupport) { "Native I2C is unavailable in API17" }
+            return open(devicePath, NativeLinuxI2cBridge)
+        }
 
         internal fun open(devicePath: String, bridge: LinuxI2cBridge): LinuxI2cTransport {
             if (!I2C_DEVICE_PATH.matches(devicePath)) {

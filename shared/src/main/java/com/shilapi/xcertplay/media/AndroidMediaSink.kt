@@ -1,6 +1,5 @@
 package com.shilapi.xcertplay.media
 
-import android.media.AudioAttributes
 import android.media.AudioFormat as AndroidAudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -328,10 +327,10 @@ private class VideoDecoder(
         renderedFrameLogged = false
         submittedFrameLogged = false
         if (next != null) {
-            report("decoder=${next.name} mime=$mime size=${width}x$height")
+            report("decoder=${com.shilapi.xcertplay.compat.MediaCodecCompat.name(next)} mime=$mime size=${width}x$height")
             Log.i(
                 TAG,
-                "video decoder configured name=${next.name} mime=$mime size=${width}x$height",
+                "video decoder configured name=${com.shilapi.xcertplay.compat.MediaCodecCompat.name(next)} mime=$mime size=${width}x$height",
             )
         }
     }
@@ -639,7 +638,7 @@ private class AudioRenderer(
             MediaCodec.createDecoderByType(mime).also {
                 it.configure(mediaFormat, null, null, 0)
                 it.start()
-                Log.i(TAG, "audio decoder configured mime=$mime name=${it.name}")
+                Log.i(TAG, "audio decoder configured mime=$mime name=${com.shilapi.xcertplay.compat.MediaCodecCompat.name(it)}")
             }
         } catch (error: Exception) {
             Log.e(TAG, "audio decoder configuration failed mime=$mime", error)
@@ -664,12 +663,7 @@ private class AudioRenderer(
         if (!AudioChannelMapper.usesNavigationStream(format.audioType, format.payloadType, advancedAudioChannelMapping)) {
             routeLabel = "usage"
             built = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                AudioTrack.Builder()
-                    .setAudioAttributes(audioAttributes())
-                    .setAudioFormat(pcmFormat(encoding, channelMask))
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(plan.trackBufferBytes)
-                    .build()
+                AudioTrackApi23.create(format.sampleRate, channelMask, encoding, plan.trackBufferBytes, format.audioType, format.payloadType, advancedAudioChannelMapping)
             } else {
                 @Suppress("DEPRECATION")
                 AudioTrack(AudioManager.STREAM_MUSIC, format.sampleRate, channelMask, encoding,
@@ -689,12 +683,7 @@ private class AudioRenderer(
                     routeLabel = "streamType=$streamType(fallback=usage)"
                     Log.w(TAG, "streamType=$streamType rejected by this ROM; falling back to usage-based track")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        AudioTrack.Builder()
-                            .setAudioAttributes(audioAttributes())
-                            .setAudioFormat(pcmFormat(encoding, channelMask))
-                            .setTransferMode(AudioTrack.MODE_STREAM)
-                            .setBufferSizeInBytes(plan.trackBufferBytes)
-                            .build()
+                        AudioTrackApi23.create(format.sampleRate, channelMask, encoding, plan.trackBufferBytes, format.audioType, format.payloadType, advancedAudioChannelMapping)
                     } else {
                         @Suppress("DEPRECATION")
                         AudioTrack(AudioManager.STREAM_MUSIC, format.sampleRate, channelMask, encoding,
@@ -724,13 +713,6 @@ private class AudioRenderer(
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun pcmFormat(encoding: Int, channelMask: Int) = AndroidAudioFormat.Builder()
-        .setSampleRate(format.sampleRate)
-        .setChannelMask(channelMask)
-        .setEncoding(encoding)
-        .build()
-
     private fun streamType(): Int {
         val mode = if (advancedAudioChannelMapping) {
             AudioChannelMappingMode.AUTOMOTIVE_BUS
@@ -751,46 +733,6 @@ private class AudioRenderer(
             (frequencyIndex shl 7) or
             (format.channels.coerceIn(1, 7) shl 3)
         return byteArrayOf((value ushr 8).toByte(), value.toByte())
-    }
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    private fun audioAttributes(): AudioAttributes {
-        val mode = if (advancedAudioChannelMapping) {
-            AudioChannelMappingMode.AUTOMOTIVE_BUS
-        } else {
-            AudioChannelMappingMode.MOBILE_COMPATIBLE
-        }
-        val selection = AudioChannelMapper.map(
-            audioType = format.audioType,
-            payloadType = format.payloadType,
-            mode = mode,
-        )
-        val usage = usageFor(selection.channel)
-        val contentType = contentTypeFor(selection.contentType)
-        return AudioAttributes.Builder()
-            .setUsage(usage)
-            .setContentType(contentType)
-            .build()
-            .also {
-                Log.i(
-                    TAG,
-                    "audio route type=${format.payloadType} audioType=${format.audioType} " +
-                        "mode=$mode channel=${selection.channel} " +
-                        "usage=$usage contentType=$contentType",
-                )
-            }
-    }
-
-    private fun usageFor(channel: AudioChannel): Int = when (channel) {
-        AudioChannel.MEDIA -> AudioAttributes.USAGE_MEDIA
-        AudioChannel.PHONE -> AudioAttributes.USAGE_VOICE_COMMUNICATION
-        AudioChannel.ASSISTANT -> AudioAttributes.USAGE_ASSISTANT
-        AudioChannel.NAVIGATION -> AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE
-    }
-
-    private fun contentTypeFor(contentType: AudioContentType): Int = when (contentType) {
-        AudioContentType.MUSIC -> AudioAttributes.CONTENT_TYPE_MUSIC
-        AudioContentType.SPEECH -> AudioAttributes.CONTENT_TYPE_SPEECH
     }
 
     /** Minimal OpusHead CSD for the mono 48 kHz stream CarPlay negotiates. */

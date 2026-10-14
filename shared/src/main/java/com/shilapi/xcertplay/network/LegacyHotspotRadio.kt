@@ -7,6 +7,7 @@ internal object LegacyHotspotRadio {
     fun read(interfaceName: String, band: String?): Reading {
         if (!interfaceName.matches(Regex("(?:ap|wlan|swlan|softap)[0-9]+")))
             return Reading(null, "invalid AP interface")
+        if (!com.shilapi.xcertplay.compat.RuntimeCapabilities.nativeSupport) return Reading(null, "native radio reader disabled for API17")
         val raw = try { LegacyHotspotNative.query(interfaceName) }
         catch (_: LinkageError) { return Reading(null, "driver reader unavailable") }
         if (raw.size != 3) return Reading(null, "invalid driver response")

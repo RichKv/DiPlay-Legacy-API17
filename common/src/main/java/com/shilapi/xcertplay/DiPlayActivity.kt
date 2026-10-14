@@ -4,7 +4,7 @@ package com.shilapi.xcertplay
 
 import android.Manifest
 import android.app.AlertDialog
-import android.bluetooth.BluetoothManager
+import com.shilapi.xcertplay.compat.BluetoothCompat
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -76,9 +77,11 @@ class DiPlayActivity : ComponentActivity() {
     private val bluetoothPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) choosePhone() else permissionHelp(getString(R.string.nearby_devices), getString(R.string.allow_nearby_devices_so_diplay_can_connect_to_your_paired))
     }
-    private val export = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
-        if (uri != null) exportDiagnostics(uri)
-    }
+    private val export = if (Build.VERSION.SDK_INT >= 19) {
+        registerForActivityResult(DocumentExportApi19.contract()) { uri ->
+            if (uri != null) exportDiagnostics(uri)
+        }
+    } else null
 
     private var languagePreferenceAtCreate = AppLocale.SYSTEM
 
@@ -256,8 +259,8 @@ class DiPlayActivity : ComponentActivity() {
                 else chooseReportDestination()
             }.apply { isEnabled = !exportInProgress }
             card.addView(exportButton, matchButton(10, 60))
-            card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
-            val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
+            if (Build.VERSION.SDK_INT >= 19) card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
+            val destination = if (Build.VERSION.SDK_INT < 19) getString(R.string.api17_report_storage) else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
             card.addView(label(destination + getString(R.string.nothing_is_sent_automatically_protocol_payloads_and_creden), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
         }
         section(content, getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
@@ -603,7 +606,7 @@ class DiPlayActivity : ComponentActivity() {
             }
         })
         val error = label("", 14, WARNING)
-        error.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+        ViewCompat.setAccessibilityLiveRegion(error, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
         fields.addView(error)
         val dialog = AlertDialog.Builder(this).setTitle(getString(R.string.car_hotspot_details))
             .setView(ScrollView(this).apply { addView(fields) })
@@ -785,7 +788,7 @@ class DiPlayActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             bluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT); return
         }
-        val adapter = (getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+        val adapter = BluetoothCompat.getAdapter(this)
         if (adapter == null || !adapter.isEnabled) {
             AlertDialog.Builder(this).setTitle(getString(R.string.turn_on_bluetooth))
                 .setMessage(getString(R.string.enable_the_car_s_bluetooth_and_pair_your_iphone_first))
@@ -893,7 +896,9 @@ class DiPlayActivity : ComponentActivity() {
     private fun chooseReportDestination() {
         // Some head units omit or disable DocumentsUI. Launch itself can throw, before
         // the result callback and the background writer's exception handler ever run.
-        runCatching { export.launch(reportFileName()) }.onFailure {
+        val launcher = export
+        if (launcher == null) { exportDiagnostics(); return }
+        runCatching { launcher.launch(reportFileName()) }.onFailure {
             toast(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                 getString(R.string.this_head_unit_could_not_open_a_save_location_please_try_s)
                 else getString(R.string.this_head_unit_has_no_available_file_picker_to_save_the_re))
@@ -909,11 +914,11 @@ class DiPlayActivity : ComponentActivity() {
         Thread({
             val result = runCatching {
                 val report = buildString {
-                    appendLine("DiPlay ${version()} · private beta diagnostic report")
+                    appendLine("DiPlay ${version()} · diagnostic report")
                     appendLine("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}")
                     appendLine("Head unit: ${Build.MANUFACTURER} ${Build.MODEL}")
                     appendLine("Connection: ${if (AirPlayPersistence.loadWirelessEnabled(appContext)) "wireless" else "USB"}")
-                    appendLine("Authentication: local experimental beta identity; no remote fallback")
+                    appendLine("Authentication: accessory prerequisites must be configured")
                     appendLine("CarPlay setup: ${if (setupError == null) "ready" else "authentication unavailable"}")
                     appendLine("Saved video preference (may differ from active session): ${if (AirPlayPersistence.loadHevcEnabled(appContext)) "HEVC" else "H.264"}; ${AirPlayPersistence.loadFps(appContext)} fps")
                     appendLine("CarPlay size: ${com.shilapi.xcertplay.airplay.CarPlaySize.fromWidthMillimeters(AirPlayPersistence.loadWidthPhysicalMm(appContext)).label}")
@@ -935,6 +940,12 @@ class DiPlayActivity : ComponentActivity() {
                 if (uri != null) { DiagnosticExportStore.write(appContext.contentResolver, uri, report); uri }
                 else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     DiagnosticExportStore.saveToDownloads(appContext.contentResolver, fileName, report)
+                } else if (Build.VERSION.SDK_INT < 19) {
+                    val directory = File(appContext.filesDir, "diagnostics")
+                    check(directory.isDirectory || directory.mkdirs()) { "Diagnostic directory unavailable" }
+                    val destination = File(directory, fileName)
+                    destination.writeText(report)
+                    androidx.core.content.FileProvider.getUriForFile(appContext, "${appContext.packageName}.diagnostics", destination)
                 } else error("A save location is required")
             }
             runOnUiThread {
@@ -944,7 +955,7 @@ class DiPlayActivity : ComponentActivity() {
                 if (result.isSuccess) {
                     val savedUri = result.getOrThrow()
                     AlertDialog.Builder(this).setTitle(getString(R.string.diagnostic_report_saved))
-                        .setMessage(if (uri == null) "Downloads/DiPlay/$fileName" else getString(R.string.your_report_was_saved_to_the_selected_location))
+                        .setMessage(if (uri == null && Build.VERSION.SDK_INT < 19) "DiPlay app storage: diagnostics/$fileName" else if (uri == null) "Downloads/DiPlay/$fileName" else getString(R.string.your_report_was_saved_to_the_selected_location))
                         .setPositiveButton(getString(R.string.done), null)
                         .setNeutralButton(getString(R.string.share)) { _, _ ->
                             runCatching {

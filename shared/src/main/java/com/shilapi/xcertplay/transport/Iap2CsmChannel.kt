@@ -16,7 +16,7 @@ import kotlin.math.min
  */
 class Iap2CsmChannel private constructor(
     private val link: Iap2LinkChannel,
-) : AutoCloseable {
+) : java.io.Closeable {
     private val stateLock = Object()
     private val sendLock = Object()
     private val receiveLock = Object()

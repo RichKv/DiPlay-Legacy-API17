@@ -1,62 +1,31 @@
-﻿# DiPlay Legacy Android
+# DiPlay Legacy API17
 
-> This project is modified from [shihabal3amri/DiPlay](https://github.com/shihabal3amri/DiPlay), with a focus on compatibility with older Android versions and legacy Android-based head units.
+An Android 4.2.2 / API17 compatibility edition of [DiPlay-Legacy-Android](https://github.com/programmerguohuajing/DiPlay-Legacy-Android), based on version 0.2.7, commit `c8884adcc75bfda3c134db63877bd6c6f83beb74`.
 
-> Upstream project: https://github.com/shihabal3amri/DiPlay
+[简体中文](README.zh-CN.md) · [Changes](docs/API17_CHANGES.md) · [Build](docs/BUILD.md) · [Install](docs/INSTALL.md) · [Validation](docs/VALIDATION.md) · [Licenses](docs/THIRD_PARTY_NOTICES.md)
 
-**CarPlay for compatible BYD Android head units.** Wired and wireless, with the familiar DiAuto interface. Independent app: `com.shihab.diplay`.
+## Purpose
 
-> **BYD support scope:** These projects focus on BYD cars. They may work on other brands, but other brands are unsupported and there are no plans to add support or fix brand-specific incompatibilities.
+This edition lowers the minimum Android level from API19 (Android 4.4) to API17 (Android 4.2.2). It changes API-level access, runtime compatibility, resources and build configuration. It preserves the upstream protocol and application choices; it adds no vehicle integration or application service interfaces.
 
-[Download & website](https://shihabal3amri.github.io/DiPlay/) · [Release](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.7) · [Report a problem](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+Compilation, installation and main-interface startup are this edition's verification scope. Pairing, radio/network availability and accessory authentication are separate prerequisites. An installable APK is not evidence of a working phone projection session. Builds contain no accessory identity or credentials and do not download them automatically.
 
-![DiPlay home](site/assets/home.png)
+## Releases
 
-## 0.2.7 — public preview
+Download the maintainer-signed APK, corresponding source and SHA256 checksums from [GitHub Releases](https://github.com/RichKv/DiPlay-Legacy-API17/releases). Use the validation record attached to the particular release. No download website is deployed by this project.
 
-Install on the **car**, not the iPhone. No jailbreak, dongle, Mac, account or authentication server is required for use. Core CarPlay does not require ADB; the optional dashboard-mode and battery features do. Your head unit must permit APK installation. The mobile APK now supports Android 4.4+ (API 19) for the classic UI and wired transport. Android 4.4–7 use a manually configured car hotspot for wireless mode, Android 8+ may use LocalOnlyHotspot, and Wi-Fi Direct remains available on Android 10+.
+Application ID: `io.github.richkv.diplay.api17`; development builds append `.debug`. Version: `0.2.7-api17.1`, versionCode 27. Updates must preserve the application ID and signing certificate, with increasing versionCode. Separately signed builds do not automatically replace one another.
 
-- Wired USB and wireless CarPlay with local authentication.
-- BYD HUD navigation with arrows, distance and street names on verified firmware.
-- Car hotspot support, improved audio buffering and saved receive diagnostics.
-- Automatic address discovery, fixed-channel Wi-Fi fallbacks and successful-configuration memory.
-- Icon/text size, resolution and frame rate; applying a display change reconnects CarPlay.
-- Local diagnostic export. Reports are sent only if you choose to share them.
-- Separate installation alongside DiAuto. Run one projection app at a time.
-- Legacy Android fallbacks for media keys, notification/services, USB configuration and requests, audio/video codecs, multidex and Java library APIs.
+## Build
 
-This is **not an Apple-certified product**. The APK bundles an experimental accessory identity recovered from public Carlinkit firmware, not a newly provisioned MFi identity for DiPlay. A bundled private key is extractable. Acceptance after future iOS updates, reliability across head units and suitability of that identity for general distribution are unresolved. This release invites community testing; it is not a guarantee of universal compatibility.
+JDK 25, Gradle 9.5, Android SDK 37 and build-tools 36.0.0. The API17 variant requires no NDK and packages no JNI libraries.
 
-Earlier releases were tested on the development DiLink5.1 car: live windshield guidance and street names work, Car hotspot now starts CarPlay, and Wi-Fi Direct performance is substantially improved. Occasional audio cutouts remain and are deferred to a later update. The newly packaged 0.2.7 APK has not had a separate on-car test. Broader head-unit and iOS compatibility is not guaranteed. The HUD firmware scope and cleanup limits are documented in [BYD navigation](docs/BYD_NAVIGATION.md).
+```sh
+./gradlew :mobile:assembleApi17Debug
+```
 
-## What’s new in 0.2.7
+## Upstream and licenses
 
-- App interface in English, Simplified Chinese, Arabic, Russian and Spanish; synchronized Android app-language settings.
-- Steering-wheel media controls and long-press Siri on supported BYD firmware while CarPlay is on screen.
-- Dashboard display choices: map, turn card, or both; corrected dashboard keyframe recovery.
-- Optional ADB feature on supported DiLink 5.0: pause the dashboard map stream when its display mode hides the map.
-- Optional ADB battery reporting for Apple Maps, with warning threshold, charging-connector selection and a checked reconnect action.
-- Audio playback reliability fixes and clearer dashboard settings.
+This is an independent derivative. The selected upstream declares API19 as its minimum; it does not establish a requirement for the Android 4.4.4 patch release. [Source provenance](docs/UPSTREAM_PROVENANCE.md) and [credited upstream README snapshots](docs/UPSTREAM-README.md) are retained. Upstream feature descriptions and validation apply to upstream, not to this APK.
 
-## Documentation
-
-- [Install and connect](docs/INSTALL.md)
-- [Compatibility and troubleshooting](docs/COMPATIBILITY.md)
-- [Privacy and diagnostic reports](docs/PRIVACY.md)
-- [Build from source](docs/BUILD.md)
-- [Validation](docs/VALIDATION.md)
-- [Release notes](CHANGELOG.md)
-- [Credits and licenses](docs/THIRD_PARTY_NOTICES.md)
-
-The website is available in English, Arabic, Russian, Spanish and Simplified Chinese. The app interface supports those same five languages. Choose the app language in Settings; on Android 13+, it stays synchronized with Android’s per-app language setting.
-
-## Source and credits
-
-Based on [xcertplay](https://github.com/shilapi/xcertplay), GPL-3.0. The home/settings UI and website adapt [DiAuto](https://github.com/shihabal3amri/DiAuto), AGPL-3.0; that license is included in `docs/licenses`. Preserve those notices when distributing modifications. CarPlay and its icon belong to Apple Inc.; no Apple or BYD affiliation or endorsement is implied.
-
-This repository starts with a clean public source snapshot. Local research, tester reports and release-signing secrets are excluded. The complete source corresponding to the APK is provided with every release; experimental runtime identity assets are described separately in the build instructions and notices.
-
-## Local release packaging
-
-The release APK intentionally contains the experimental accessory identity. The Git repository and source archive exclude all accessory and Android signing keys; tests generate synthetic identities at runtime. Source/CI builds omit runtime identity assets by default. Local release builds explicitly select an external asset directory. Publishing the APK makes its bundled identity extractable; building locally does not preserve that identity's confidentiality.
-
+Receiver code retains GPLv3; DiAuto-derived UI retains AGPL-3.0-only. BYD images and the CarPlay icon have separate notices. See the complete [third-party notices](docs/THIRD_PARTY_NOTICES.md). This project is not an official DiPlay release or an Apple-certified product.
